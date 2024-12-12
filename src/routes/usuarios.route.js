@@ -1,10 +1,74 @@
 import {Router} from 'express'
-import {registrarUsuarioCliente, registrarUsuarioOperador, login} from '../controllers/usuarios.controller.js'
+import {sequelize} from '../database/database.js'
+import jwt from 'jsonwebtoken'
+import {getClientes, getCliente, getOperadores, getOperador, registrarUsuarioCliente, registrarUsuarioOperador, actualizarCliente, actualizarOperador, actualizarEstadoUsuario, login} from '../controllers/usuarios.controller.js'
 
 export const routerUsuarios = Router()
 
-routerUsuarios.post('/registrarCliente', registrarUsuarioCliente)
+//Middelware de JWT para verificar autentificacion de login
+const autenticarToken = (req, res, next) => {
+    const autHeader = req.headers['authorization']
+    const token = autHeader && autHeader.split(' ')[1]
 
-routerUsuarios.post('/registrarOperador', registrarUsuarioOperador)
+    if(!token){
+        return res.status(401).json({error: 'No autorizado'})
+    }
 
-routerUsuarios.post('/login', login)
+    jwt.verify(token, process.env.JWT_SECRET, (err, decode)=> {
+        if(err){
+            
+            return res.status(403).json({error: 'Sin permisos para obtener estos recursos'})
+        }
+
+        next()
+    })
+}
+
+//Middelware validar si el usuario existe y si es Operador
+const autenticarRol = async (req, res, next) =>{
+    try{
+        const {idUsuario} = req.body
+        if(!idUsuario) return res.status(400).json({message: 'Faltan parametros idUsuario'})
+
+        const buscar = await sequelize.query(
+            `EXEC SP_Buscar_UsuarioId @idUsuario=:idUsuario`,
+            {
+                replacements:{
+                    idUsuario
+                }
+            }
+        )
+
+        
+        const usuario = buscar[0][0]
+        
+        if(!usuario) return res.status(404).json({message: 'El usuario no existe'})
+
+        if(usuario.rol_idRol !== 2) return res.status(401).json({message: 'Usuario no autorizado'})
+
+        next()
+
+    }catch(error){
+        return res.status(500).json({message: error.message})
+    }
+}
+
+routerUsuarios.get('/getClientes', autenticarToken, getClientes)
+
+routerUsuarios.get('/getCliente/:Id', autenticarToken, getCliente)
+
+routerUsuarios.get('/getOperadores', autenticarToken, getOperadores)
+
+routerUsuarios.get('/getOperador/:Id', autenticarToken, getOperador)
+
+routerUsuarios.post('/registrarCliente', autenticarToken, autenticarRol, registrarUsuarioCliente)
+
+routerUsuarios.post('/registrarOperador', autenticarToken, autenticarRol, registrarUsuarioOperador)
+
+routerUsuarios.put('/actualizarCliente/:Id', autenticarToken, autenticarRol, actualizarCliente)
+
+routerUsuarios.put('/actualizarOperador/:Id', autenticarToken, autenticarRol, actualizarOperador)
+
+routerUsuarios.put('/actualizarEstado/:Id', autenticarToken, autenticarRol, actualizarEstadoUsuario)
+
+routerUsuarios.post('/login', login) 

@@ -3,6 +3,7 @@ import express from 'express'
 import {sequelize} from './database/database.js'
 import {routerUsuarios} from './routes/usuarios.route.js'
 import {routerCatProductos} from './routes/catProductos.route.js'
+import {routerProductos} from './routes/productos.route.js'
 
 config()
 
@@ -12,6 +13,7 @@ app.use(express.json()) //para interpretar datos json
 //Rutas
 app.use('/usuarios', routerUsuarios)
 app.use('/catProductos', routerCatProductos)
+app.use('/productos', routerProductos)
 
 const PORT = process.env.PORT
 

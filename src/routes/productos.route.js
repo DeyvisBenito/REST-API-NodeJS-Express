@@ -1,9 +1,9 @@
 import { Router } from "express"
 import jwt from 'jsonwebtoken'
 import {sequelize} from '../database/database.js'
-import {getCatProductos, getCatProducto, insertarCategoria, actualizarCategoria, actualizarEstadoCat} from '../controllers/catProductos.controller.js'
+import {insertarProducto, obtenerProductos, obtenerProducto, actualizarProducto, actualizarEstado} from '../controllers/productos.controller.js'
 
-export const routerCatProductos = Router()
+export const routerProductos = Router();
 
 //Middelware de JWT para verificar autentificacion de login
 const autenticarToken = (req, res, next) => {
@@ -54,12 +54,12 @@ const autenticarRol = async (req, res, next) =>{
 }
 
 
-routerCatProductos.get('/', autenticarToken, getCatProductos)
+routerProductos.get("/", autenticarToken, obtenerProductos)
 
-routerCatProductos.get('/:Id', autenticarToken, getCatProducto)
+routerProductos.get("/:Id", autenticarToken, obtenerProducto)
 
-routerCatProductos.post('/', autenticarToken, autenticarRol, insertarCategoria)
+routerProductos.post("/insertarProducto", autenticarToken, autenticarRol, insertarProducto)
 
-routerCatProductos.put('/:Id', autenticarToken, autenticarRol, actualizarCategoria)
+routerProductos.put("/actualizarProducto/:Id", autenticarToken, autenticarRol, actualizarProducto)
 
-routerCatProductos.put('/estado/:Id', autenticarToken, autenticarRol, actualizarEstadoCat)
+routerProductos.put("/estado/:Id", autenticarToken, autenticarRol, actualizarEstado)
