@@ -1,9 +1,9 @@
-import { Router } from "express"
+import {Router} from 'express'
 import jwt from 'jsonwebtoken'
 import {sequelize} from '../database/database.js'
-import {insertarProducto, obtenerProductos, obtenerProducto, actualizarProducto, actualizarEstado} from '../controllers/productos.controller.js'
+import {getProductosCarrito, getProductoCarrito, insertarProCarrito, actualizarEstadoProCarrito} from '../controllers/productosCarrito.controller.js'
 
-export const routerProductos = Router();
+export const routerProCarrito = Router()
 
 //Middelware de JWT para verificar autentificacion de login
 const autenticarToken = (req, res, next) => {
@@ -11,21 +11,21 @@ const autenticarToken = (req, res, next) => {
     const token = autHeader && autHeader.split(' ')[1]
 
     if(!token){
-        return res.status(401).json({error: 'No autorizado, no se ha recibido Token'})
+        return res.status(401).json({error: 'No autorizado'})
     }
 
     jwt.verify(token, process.env.JWT_SECRET, (err, decode)=> {
         if(err){
             
-            return res.status(403).json({error: 'Sin permisos para obtener estos recursos, Token invalido'})
+            return res.status(403).json({error: 'Sin permisos para obtener estos recursos'})
         }
         req.user = decode;
         next()
     })
 }
 
-//Middelware validar si el usuario existe y si es Operador
-const autenticarRol = async (req, res, next) =>{
+//Middelware validar si el usuario existe
+const autenticarUsuarioExist = async (req, res, next) =>{
     try{
         const {idUsuario} = req.body
         if(!idUsuario) return res.status(400).json({message: 'Faltan parametros idUsuario'})
@@ -44,8 +44,6 @@ const autenticarRol = async (req, res, next) =>{
         
         if(!usuario) return res.status(404).json({message: 'El usuario no existe'})
 
-        if(usuario.rol_idRol !== 2) return res.status(401).json({message: 'Usuario no autorizado'})
-
         next()
 
     }catch(error){
@@ -53,13 +51,10 @@ const autenticarRol = async (req, res, next) =>{
     }
 }
 
+routerProCarrito.get("/", autenticarToken, autenticarUsuarioExist, getProductosCarrito)
 
-routerProductos.get("/", autenticarToken, obtenerProductos)
+routerProCarrito.get("/:Id", autenticarToken, autenticarUsuarioExist, getProductoCarrito)
 
-routerProductos.get("/:Id", autenticarToken, obtenerProducto)
+routerProCarrito.post("/", autenticarToken, autenticarUsuarioExist, insertarProCarrito)
 
-routerProductos.post("/insertarProducto", autenticarToken, autenticarRol, insertarProducto)
-
-routerProductos.put("/actualizarProducto/:Id", autenticarToken, autenticarRol, actualizarProducto)
-
-routerProductos.put("/estado/:Id", autenticarToken, autenticarRol, actualizarEstado)
+routerProCarrito.put("/actualizarEstado/:Id", autenticarToken, autenticarUsuarioExist, actualizarEstadoProCarrito)

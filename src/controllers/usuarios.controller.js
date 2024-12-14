@@ -216,13 +216,13 @@ export const registrarUsuarioCliente = async (req, res) => {
             }
         );
 
-        const cliente = resul[0]
-        const idUsuario = cliente[0].idUsuario
-        const correo_electronico = cliente[0].correoElectronico
+       // const cliente = resul[0]
+       // const idUsuario = cliente[0].idUsuario
+       // const correo_electronico = cliente[0].correoElectronico
 
-        const token = generarJWT(idUsuario, correo_electronico)
+       // const token = generarJWT(idUsuario, correo_electronico)
 
-        res.status(201).json(token)
+        res.status(201).json({message:'Cliente registrado'})
 
     } catch (error) {
         return res.status(500).json({ message: error.message })

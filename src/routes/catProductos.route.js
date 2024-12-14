@@ -19,7 +19,7 @@ const autenticarToken = (req, res, next) => {
             
             return res.status(403).json({error: 'Sin permisos para obtener estos recursos'})
         }
-
+        req.user = decode;
         next()
     })
 }
@@ -28,7 +28,7 @@ const autenticarToken = (req, res, next) => {
 const autenticarRol = async (req, res, next) =>{
     try{
         const {idUsuario} = req.body
-        if(!idUsuario) return res.status(400).json({message: 'Faltan parametros usuarioId'})
+        if(!idUsuario) return res.status(400).json({message: 'Faltan parametros idUsuario'})
             
         const buscar = await sequelize.query(
             `EXEC SP_Buscar_UsuarioId @idUsuario=:idUsuario`,

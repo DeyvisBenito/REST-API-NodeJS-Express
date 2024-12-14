@@ -19,7 +19,8 @@ const autenticarToken = (req, res, next) => {
             
             return res.status(403).json({error: 'Sin permisos para obtener estos recursos'})
         }
-
+        req.user = decode;
+        console.log(req.user)
         next()
     })
 }
