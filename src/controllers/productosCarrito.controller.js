@@ -2,7 +2,8 @@ import {sequelize} from '../database/database.js'
 
 //Validar si el productoCarrito existe
  const proCarritoExist = async (req) =>{
-    const {idUsuario, idProducto} = req.body
+    const {idUsuario} = req.user
+    const {idProducto} = req.body
     try{
         const buscar = await sequelize.query(
             `EXEC SP_Buscar_ProCarritoId @idProducto=:idProducto , @idusuario=:idUsuario`,{
@@ -27,7 +28,7 @@ import {sequelize} from '../database/database.js'
 const productoExistInCarrito = async (req) =>{
     try{
         const {Id} = req.params
-        const {idUsuario} = req.body
+        const {idUsuario} = req.user
         const exist = await sequelize.query(
             `EXEC SP_Buscar_ProductoInCarrito_Usuario @idProCarrito=:Id, @idUsuario=:idUsuario`,{
                 replacements:{
@@ -53,7 +54,7 @@ const productoExistInCarrito = async (req) =>{
 
 export const getProductosCarrito = async(req, res) =>{
     try{
-        const {idUsuario} = req.body
+        const {idUsuario} = req.user
         if(!idUsuario) return res.status(404).json({message:'El usuario no existe'})
         const resp = await sequelize.query(
             `EXEC SP_Buscar_TodosProCarrito @idUsuario=:idUsuario`,{
@@ -74,7 +75,7 @@ export const getProductosCarrito = async(req, res) =>{
 export const getProductoCarrito = async(req, res) =>{
     try{
         const {Id} = req.params
-        const {idUsuario} = req.body
+        const {idUsuario} = req.user
         if(!idUsuario) return res.status(400).json({message:'Faltan parametros'})
 
         const proCarrito = await productoExistInCarrito(req)
@@ -89,7 +90,8 @@ export const getProductoCarrito = async(req, res) =>{
 
 export const insertarProCarrito = async (req, res) =>{
     try{
-        const {idUsuario, idProducto, cantidad} = req.body
+        const {idUsuario} = req.user
+        const {idProducto, cantidad} = req.body
         if(!idUsuario || !idProducto || !cantidad) return res.status(400).json({message:'Faltan parametros'})
         
         const productoExiste = await proCarritoExist(req)
@@ -127,7 +129,8 @@ export const insertarProCarrito = async (req, res) =>{
 export const actualizarEstadoProCarrito = async (req, res) =>{
     try{
         const {Id} = req.params
-        const {idUsuario, idEstado, } = req.body
+        const {idUsuario} = req.user
+        const {idEstado=6} = req.body
         if(!idUsuario || !idEstado) return res.status(400).json({message:'Faltan parametros'})
         
         const exist = await productoExistInCarrito(req)

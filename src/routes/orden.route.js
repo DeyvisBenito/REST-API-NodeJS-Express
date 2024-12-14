@@ -1,7 +1,7 @@
 import {Router} from 'express'
 import jwt from 'jsonwebtoken'
 import {sequelize} from '../database/database.js'
-import {getOrdenes, getOrden, crearOrden_deCarrito, updateOrden, cancelarOrden, entregarOrden} from '../controllers/orden.controller.js'
+import {getOrdenesGeneral, getOrdenesUsuario, getOrden, crearOrden_deCarrito, updateOrden, cancelarOrden, entregarOrden} from '../controllers/orden.controller.js'
 
 export const routerOrden = Router()
 
@@ -27,7 +27,7 @@ const autenticarToken = (req, res, next) => {
 //Middelware validar si el usuario existe
 const autenticarUsuarioExist = async (req, res, next) =>{
     try{
-        const {idUsuario} = req.body
+        const {idUsuario} = req.user
         if(!idUsuario) return res.status(400).json({message: 'Faltan parametros idUsuario'})
             
         const buscar = await sequelize.query(
@@ -54,14 +54,14 @@ const autenticarUsuarioExist = async (req, res, next) =>{
 //Middelware validar si el usuario existe y si es Operador
 const autenticarRol = async (req, res, next) =>{
     try{
-        const {idUsarioAuth} = req.body
-        if(!idUsarioAuth) return res.status(400).json({message: 'Faltan parametros idUsuario'})
+        const {idUsuario} = req.user
+        if(!idUsuario) return res.status(400).json({message: 'Faltan parametros idUsuario'})
             
         const buscar = await sequelize.query(
-            `EXEC SP_Buscar_UsuarioId @idUsuario=:idUsarioAuth`,
+            `EXEC SP_Buscar_UsuarioId @idUsuario=:idUsuario`,
             {
                 replacements:{
-                    idUsarioAuth
+                    idUsuario
                 }
             }
         )
@@ -80,8 +80,9 @@ const autenticarRol = async (req, res, next) =>{
     }
 }
 
+routerOrden.get('/ordenesG', autenticarToken, autenticarRol, getOrdenesGeneral)
 
-routerOrden.get('/', autenticarToken, autenticarUsuarioExist, getOrdenes)
+routerOrden.get('/', autenticarToken, autenticarUsuarioExist, getOrdenesUsuario)
 
 routerOrden.get('/:Id', autenticarToken, autenticarUsuarioExist, getOrden)
 

@@ -20,7 +20,6 @@ const autenticarToken = (req, res, next) => {
             return res.status(403).json({error: 'Sin permisos para obtener estos recursos'})
         }
         req.user = decode;
-        console.log(req.user)
         next()
     })
 }
@@ -28,9 +27,9 @@ const autenticarToken = (req, res, next) => {
 //Middelware validar si el usuario existe y si es Operador
 const autenticarRol = async (req, res, next) =>{
     try{
-        const {idUsuario} = req.body
+        const {idUsuario} = req.user
         if(!idUsuario) return res.status(400).json({message: 'Faltan parametros idUsuario'})
-
+            
         const buscar = await sequelize.query(
             `EXEC SP_Buscar_UsuarioId @idUsuario=:idUsuario`,
             {
@@ -54,13 +53,13 @@ const autenticarRol = async (req, res, next) =>{
     }
 }
 
-routerUsuarios.get('/getClientes', autenticarToken, getClientes)
+routerUsuarios.get('/getClientes', autenticarToken, autenticarRol, getClientes)
 
-routerUsuarios.get('/getCliente/:Id', autenticarToken, getCliente)
+routerUsuarios.get('/getCliente/:Id', autenticarToken, autenticarRol, getCliente)
 
-routerUsuarios.get('/getOperadores', autenticarToken, getOperadores)
+routerUsuarios.get('/getOperadores', autenticarToken, autenticarRol, getOperadores)
 
-routerUsuarios.get('/getOperador/:Id', autenticarToken, getOperador)
+routerUsuarios.get('/getOperador/:Id', autenticarToken, autenticarRol, getOperador)
 
 routerUsuarios.post('/registrarCliente', autenticarToken, autenticarRol, registrarUsuarioCliente)
 

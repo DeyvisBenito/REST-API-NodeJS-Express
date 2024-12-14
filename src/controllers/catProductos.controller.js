@@ -89,10 +89,11 @@ export const getCatProducto = async (req, res) => {
 
 export const insertarCategoria = async(req, res) =>{
     try{
-        const {idUsuario, nombre} = req.body
+        const {idUsuario} = req.user
+        const {nombre} = req.body
         if(!idUsuario || !nombre) return res.status(400).json({message: 'Faltan parametros'})
 
-        const existe = await categoriaExistName(req, res)
+        const existe = await categoriaExistName(req)
         if(existe) return res.status(406).json({message: 'La categoria ya existe'})
 
         const resp = await sequelize.query(
@@ -115,7 +116,8 @@ export const insertarCategoria = async(req, res) =>{
 export const actualizarCategoria = async (req, res)=>{
     try{
         const {Id} = req.params
-        const {idUsuario, nombre} = req.body
+        const {idUsuario} = req.user
+        const {nombre} = req.body
         if(!idUsuario || !nombre) return res.status(400).json({error: 'Faltan parametros'})
 
         const categoria = await categoriaExisId(req, res)
@@ -144,7 +146,8 @@ export const actualizarCategoria = async (req, res)=>{
 export const actualizarEstadoCat = async (req, res) =>{
     try{
         const {Id} = req.params
-        const {idUsuario, idEstados} = req.body
+        const {idUsuario} = req.user
+        const {idEstados} = req.body
 
         if(!idUsuario || !idEstados) return res.status(400).json({message:'Faltan parametros'})
         

@@ -4,10 +4,9 @@ import { generarJWT } from '../services/jwb.service.js'
 
 
 //Validacion de si el correo existente
-const correoExist = async (req) => {
+const correoExist = async (req, idUsuarioClie) => {
     try {
         const {Id} = req.params
-        const {idUsuarioClie} = req.body
         const {correoElectronico} = req.body
 
         const exist = await sequelize.query(
@@ -83,9 +82,8 @@ const operadorExist = async(req) =>{
 }
 
 //Validacion si el UsuarioCliente existe
-const usuarioClieExist = async (req) =>{
+const usuarioClieExist = async (req, idUsuarioClie) =>{
     try{
-        const {idUsuarioClie} = req.body
         const {Id} = req.params
         const resp = await sequelize.query(
             `EXEC SP_Buscar_UsuarioClienteId @idUsuarioCli=:idUsuarioClie, @idCliente=:Id`,{
@@ -195,7 +193,7 @@ export const registrarUsuarioCliente = async (req, res) => {
 
         const passwordEncrypted = await encryptar(password)
 
-        const exist = await correoExist(req, res)
+        const exist = await correoExist(req, undefined)
         if(exist) return res.status(406).send('El correo electronico ya existe')
 
         const resul = await sequelize.query(
@@ -238,7 +236,7 @@ export const registrarUsuarioOperador= async (req, res) =>{
             return res.status(400).send('Faltan parametros')
 
 
-        const exist = await correoExist(req, res)
+        const exist = await correoExist(req, undefined)
         if(exist) return res.status(406).send('El correo electronico ya existe')
     
         const passwordEncrypted = await encryptar(password)
@@ -257,13 +255,13 @@ export const registrarUsuarioOperador= async (req, res) =>{
              }
         )
         
-        const resp = response[0]
-        const idUsuario = resp[0].idUsuario
-        const correo_electronico = resp[0].correo_electronico
+       // const resp = response[0]
+       // const idUsuario = resp[0].idUsuario
+       // const correo_electronico = resp[0].correo_electronico
 
-        const token = generarJWT(idUsuario, correo_electronico)
+       // const token = generarJWT(idUsuario, correo_electronico)
 
-        res .status(201).json({message: token})
+        res .status(201).json({message:'Operador registrado correctamente'})
 
     }catch(error){
         return res.status(500).json({message: error.message})
@@ -274,17 +272,21 @@ export const registrarUsuarioOperador= async (req, res) =>{
 export const actualizarCliente = async (req, res) => {
     try{
         const {Id} = req.params
-        const {idUsuario, idUsuarioClie, correoElectronico, nombreCompleto, telefono, razonSocial, nombreComercial, direccionEntrega, fechaNac} = req.body
-        if(!idUsuario || !idUsuarioClie || !correoElectronico || !nombreCompleto || !telefono || !razonSocial || !nombreComercial || !direccionEntrega || !fechaNac)
+        const {idUsuario} = req.user
+        const {correoElectronico, nombreCompleto, telefono, razonSocial, nombreComercial, direccionEntrega, fechaNac} = req.body
+        if(!correoElectronico || !nombreCompleto || !telefono || !razonSocial || !nombreComercial || !direccionEntrega || !fechaNac)
             return res.status(400).json({message: 'Faltan parametros'})
 
         const clienteExiste = await clienteExist(req)
         if(!clienteExiste) return res.status(404).json({message: 'El cliente a editar no existe'})
 
-        const usuarioExiste = await usuarioClieExist(req)
-        if(!usuarioExiste) return res.status(400).json({message: 'El usuario Cliente no existe'})
+        const idUsuarioClie = clienteExiste.idCliente
 
-        const correoExiste = await correoExist(req)
+        const usuarioExiste = await usuarioClieExist(req, idUsuarioClie)
+        if(!usuarioExiste) return res.status(400).json({message: 'El usuario Cliente no existe'})
+        
+        
+        const correoExiste = await correoExist(req, idUsuarioClie)
         if(correoExiste) return res.status(406).json({message: 'El correo ya existe'})
 
         const resp = await sequelize.query(
@@ -314,13 +316,14 @@ export const actualizarCliente = async (req, res) => {
 export const actualizarOperador = async (req, res) => {
     try{
         const {Id} = req.params
-        const {idUsuario, correoElectronico, nombre_completo, telefono, fechaNac} = req.body
-        if(!idUsuario || !correoElectronico || !nombre_completo || !telefono || !fechaNac) return res.status(400).json({message:'Faltan parametros'})
+        const {idUsuario} = req.user
+        const {correoElectronico, nombre_completo, telefono, fechaNac} = req.body
+        if(!correoElectronico || !nombre_completo || !telefono || !fechaNac) return res.status(400).json({message:'Faltan parametros'})
         
         const exist = await operadorExist(req)
         if(!exist) return res.status(400).json({message: 'El operador no existe'})
 
-        const existCorreo = await correoExist(req)
+        const existCorreo = await correoExist(req, undefined)
         if(existCorreo) return res.status(406).json({message: 'El correo ya existe'})
 
         const resp = await sequelize.query(
@@ -346,8 +349,8 @@ export const actualizarOperador = async (req, res) => {
 export const actualizarEstadoUsuario= async (req, res) =>{
     try{
         const {Id} = req.params
-        const {idUsuario, idEstado} = req.body
-        if(!idUsuario || !idEstado) return res.status(400).json({message: 'Faltan parametros'})
+        const {idEstado} = req.body
+        if(!idEstado) return res.status(400).json({message: 'Faltan parametros'})
 
         const exist = await usuarioExist(req)
         if(!exist) return res.status(404).json({message: 'El usuario no existe'})

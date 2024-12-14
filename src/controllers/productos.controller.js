@@ -118,13 +118,14 @@ export const obtenerProducto = async (req, res) =>{
 
 export const insertarProducto = async (req, res) =>{
     try{
-        const {idCatProducto, idUsuario, nombre, marca, codigo, stock, precio, foto} = req.body
+        const {idUsuario} = req.user
+        const {idCatProducto, nombre, marca, codigo, stock, precio, foto} = req.body
         if(!idCatProducto || !idUsuario || !nombre || !marca || !codigo || !stock || !precio || !foto) return res.status(400).json({conflict: 'Faltan parametros'})
         
-        const catExist = await catProductosExist(req, res)
+        const catExist = await catProductosExist(req)
         if(!catExist) return res.status(404).json({message: 'La categoria de productos no existe'})
 
-        const exist = await existProduct(req, res)
+        const exist = await existProduct(req)
         if(exist) return res.status(409).json({error: 'El codigo del producto ya existe'})
        
         //Para pruebas en postman por favor en el apartado de 'foto' agregar cualquier valo base64
@@ -157,7 +158,8 @@ export const insertarProducto = async (req, res) =>{
 export const actualizarProducto = async (req, res) => {
     try{
         const {Id} = req.params
-        const {idCatProducto, idUsuario, nombre, marca, codigo, stock, precio, foto} = req.body
+        const {idUsuario} = req.user
+        const {idCatProducto, nombre, marca, codigo, stock, precio, foto} = req.body
         if(!Id || !idCatProducto || !idUsuario || !nombre || !marca || !codigo || !stock || !precio || !foto) return res.status(400).json({conflict: 'Faltan parametros'})
  
         const existProId = await existProductId(req, res)
@@ -166,7 +168,7 @@ export const actualizarProducto = async (req, res) => {
         const existPorCod = await existProduct(req, res)
         if(existPorCod) return res.status(409).json({error: 'El codigo del producto ya esta en uso'})
         
-        const existCatPro = await catProductosExist(req, res)
+        const existCatPro = await catProductosExist(req)
         if(!existCatPro) return res.status(404).json({message: 'La categoria de productos no existe'})
 
         //Para pruebas en postman por favor en el apartado de 'foto' agregar cualquier valo base64

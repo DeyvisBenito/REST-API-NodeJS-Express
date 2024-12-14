@@ -27,7 +27,7 @@ const autenticarToken = (req, res, next) => {
 //Middelware validar si el usuario existe
 const autenticarUsuarioExist = async (req, res, next) =>{
     try{
-        const {idUsuario} = req.body
+        const {idUsuario} = req.user
         if(!idUsuario) return res.status(400).json({message: 'Faltan parametros idUsuario'})
             
         const buscar = await sequelize.query(
