@@ -5,7 +5,7 @@
 
 Crear un nuevo archivo con el nombre ``.env`` y llenarlo con la plantilla que esta en el archivo ``.env.template``, llenarla de los datos que ahi especifican, recordando que la Base de Datos es MSSQL
 
-## La insercision de nuevos usuarios tanto clientes como operadores son realizados ya dentro de la aplicacion por un operador
+## La inserción de nuevos usuarios tanto clientes como operadores son realizados ya dentro de la aplicacion por un operador
 
 Para lograr inicializar este proyecto, he comentado esta seguridad en la linea:
 
