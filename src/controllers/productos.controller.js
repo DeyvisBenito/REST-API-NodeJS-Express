@@ -17,12 +17,14 @@ const existProduct= async (req) => {
 
         const existProduct = cod[0][0] 
 
+        //Si trae Id se valida cuando se quiere actualizar un producto
         if(Id){
-            if(existProduct && existProduct.idProductos !== Id){
+            //Si existe un producto con ese codigo y no es el mismo que se esta actualizando entonces devuelve true
+            if(existProduct && existProduct.idProductos !== Number(Id)){ 
                 //Ya existe otro producto con el mismo codigo 
                 return true
             }
-        }else if(existProduct){
+        }else if(existProduct){ //Buscar codigo de producto cuando se desea ingresar un nuevo producto
             //El producto ya existe 
             return true
         }
@@ -33,7 +35,7 @@ const existProduct= async (req) => {
     }
 }
 
-//Validar si el producto existe (Id)
+//Validar si el producto existe (Id) este o no activo
 const existProductId = async(req) =>{
     try{
         const {Id} = req.params
@@ -60,7 +62,7 @@ const existProductId = async(req) =>{
     }
 }
 
-//Validar categoria Producto existe
+//Validar categoria Producto si existe
 const catProductosExist = async (req)=>{
     try{
         const {idCatProducto} = req.body
@@ -90,6 +92,7 @@ const catProductosExist = async (req)=>{
 
 //Funciones de los endpoints
 
+//Obtiene todos los productos activos o inactivos (requerido solo para los operadores)
 export const obtenerProductos = async (req, res) =>{
     try{
         const obtenerPro= await sequelize.query(
@@ -103,6 +106,22 @@ export const obtenerProductos = async (req, res) =>{
     }
 }
 
+
+//Obtiene los productos unicamente en estado activos
+export const obtenerProductosActivos = async (req, res) => {
+    try{
+        const obtenerPorductosActivos = await sequelize.query(
+            `SP_Buscar_TodosProductos_Activos`
+        )
+
+        const productos = obtenerPorductosActivos[0]
+        return res.status(200).json(productos)
+    }catch(error){
+        return res.status(500).json({message: error.message})
+    }
+}
+
+//Obtiene un producto especifico este o no activo
 export const obtenerProducto = async (req, res) =>{
     try{
         const {Id} = req.params
@@ -116,6 +135,7 @@ export const obtenerProducto = async (req, res) =>{
     }
 }
 
+//Inserta un producto validando si su codigo de producto no esta en uso
 export const insertarProducto = async (req, res) =>{
     try{
         const {idUsuario} = req.user
@@ -128,7 +148,7 @@ export const insertarProducto = async (req, res) =>{
         const exist = await existProduct(req)
         if(exist) return res.status(409).json({error: 'El codigo del producto ya existe'})
        
-        //Para pruebas en postman por favor en el apartado de 'foto' agregar cualquier valo base64
+        //Para pruebas en postman por favor en el apartado de 'foto' agregar cualquier valor base64
         const fotoBinaria = Buffer.from(foto, 'base64')
 
         const resp = await sequelize.query(
@@ -149,12 +169,13 @@ export const insertarProducto = async (req, res) =>{
             }
         )
 
-        res.status(201).send('Producto creado')
+        res.status(201).json({message:'Producto creado'})
     }catch(error){
         res.status(500).json({message: error.message})
     }
 }
 
+//Actualizacion del producto por medio de Id y valida si su nuevo codigo no existe aun
 export const actualizarProducto = async (req, res) => {
     try{
         const {Id} = req.params
@@ -166,7 +187,7 @@ export const actualizarProducto = async (req, res) => {
         if(!existProId) return res.status(404).json({error: 'El producto no existe'})
 
         const existPorCod = await existProduct(req, res)
-        if(existPorCod) return res.status(409).json({error: 'El codigo del producto ya esta en uso'})
+        if(existPorCod) return res.status(409).json({message: 'El codigo del producto ya esta en uso'})
         
         const existCatPro = await catProductosExist(req)
         if(!existCatPro) return res.status(404).json({message: 'La categoria de productos no existe'})
@@ -192,12 +213,13 @@ export const actualizarProducto = async (req, res) => {
         )
 
         
-        res.status(200).send('Producto actualizado')
+        res.status(200).json({message:'Producto actualizado'})
     }catch(error){
         return res.status(500).json({message: error.message})
     }
 }
 
+//Actualiza el estado de los productos a activo o inactivo
 export const actualizarEstado = async (req, res) => {
     try{
         const {Id} = req.params
@@ -220,9 +242,8 @@ export const actualizarEstado = async (req, res) => {
         )
         let estado = ''
         if(idEstados === "1"? estado='activo' : estado='inactivo')
-        res.status(200).send(`El producto ahora esta ${estado}`)
+        res.status(200).json({message:`El producto ahora esta ${estado}`})
     }catch(error){
         return res.status(500).json({message: error.message})
     }
 } 
-//Listo actualizarEstado

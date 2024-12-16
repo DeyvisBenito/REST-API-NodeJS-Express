@@ -1,7 +1,7 @@
 import { Router } from "express"
 import jwt from 'jsonwebtoken'
 import {sequelize} from '../database/database.js'
-import {insertarProducto, obtenerProductos, obtenerProducto, actualizarProducto, actualizarEstado} from '../controllers/productos.controller.js'
+import {insertarProducto, obtenerProductos, obtenerProductosActivos, obtenerProducto, actualizarProducto, actualizarEstado} from '../controllers/productos.controller.js'
 
 export const routerProductos = Router();
 
@@ -54,11 +54,13 @@ const autenticarRol = async (req, res, next) =>{
 }
 
 
-routerProductos.get("/", autenticarToken, obtenerProductos)
+routerProductos.get("/", autenticarToken, autenticarRol, obtenerProductos)
+
+routerProductos.get('/productosActivos', autenticarToken, obtenerProductosActivos)
 
 routerProductos.get("/:Id", autenticarToken, obtenerProducto)
 
-routerProductos.post("/insertarProducto", autenticarToken, autenticarRol, insertarProducto)
+routerProductos.post("/", autenticarToken, autenticarRol, insertarProducto)
 
 routerProductos.put("/actualizarProducto/:Id", autenticarToken, autenticarRol, actualizarProducto)
 

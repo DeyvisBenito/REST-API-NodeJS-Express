@@ -1,6 +1,7 @@
 import {DataTypes} from 'sequelize'
 import {sequelize} from '../database/database.js'
 
+//Este apartado no ha sido utilizado
 export const jwToken = sequelize.define('jwTokens',{
     idToken: {
         type: DataTypes.INTEGER,

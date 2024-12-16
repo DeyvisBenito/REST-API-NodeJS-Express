@@ -52,8 +52,9 @@ const buscarOrdenConfirmar = async (req) =>{
 }
 
 
-//Creacion de las funciones de los endpoints de Ordenes
+//EndPoints
 
+//Obtiene todas las ordenes de todos los usuarios (acceso solo Operador)
 export const getOrdenesGeneral = async (req, res) =>{
     try{
         const resp = await sequelize.query(
@@ -67,6 +68,7 @@ export const getOrdenesGeneral = async (req, res) =>{
     }
 }
 
+//Obtiene las ordenes del usuario logueado
 export const getOrdenesUsuario= async (req, res) =>{
     try{
         const {idUsuario} = req.user
@@ -89,6 +91,7 @@ export const getOrdenesUsuario= async (req, res) =>{
     }
 }
 
+//Obtiene una orden con su Id, para le usuario logueado
 export const getOrden = async(req, res) =>{
     try{
         const {Id} = req.params
@@ -104,7 +107,7 @@ export const getOrden = async(req, res) =>{
     }
 }
 
-//Completado, crea la orden, registra cada producto del carrito en ordenDetalle
+//Crea la orden, registra cada producto del carrito en ordenDetalle
 //actualiza los estados de los registros de CarritoProductosc a confirmado (3)
 export const crearOrden_deCarrito = async(req, res) =>{
     try{
@@ -147,7 +150,7 @@ export const crearOrden_deCarrito = async(req, res) =>{
     }
 }
 
-
+//Actualiza una orden del usuario logueado. Solo informacion general como el nombre, direccion, etc.
 export const updateOrden = async(req, res) =>{
     try{
         const {idUsuario} = req.user
@@ -175,12 +178,15 @@ export const updateOrden = async(req, res) =>{
                 }
         )
 
-        return res.status(200).send('Orden actualizada')
+        return res.status(200).json({message:'Orden actualizada'})
     }catch(error){
         return res.status(500).json({message: error.message})
     }
 }
 
+//Los usuarios podran cancelar orden, se cancela cambiando estado a cancelado (6)
+//Los productos del carrito que se agregaron a esa orden cambian estado a cancelado (6)
+//Se devuelve el stock a los productos que estaban en el carrito
 export const cancelarOrden = async(req, res) =>{
     try{
         const {Id} = req.params
@@ -207,7 +213,8 @@ export const cancelarOrden = async(req, res) =>{
     }
 }
 
-
+//Cambia de estado a entregado (4) la orden y los productos del carrito que se agregaron a esa orden
+//Solo un operador puede hacerlo
 export const entregarOrden = async(req, res) =>{
     try{
         const {Id} = req.params

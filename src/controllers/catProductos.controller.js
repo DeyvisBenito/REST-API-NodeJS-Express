@@ -1,6 +1,6 @@
 import {sequelize} from '../database/database.js'
 
-//Validar si la categoria existe
+//Validar si la categoria existe y la devuelve
 const categoriaExisId = async (req) =>{
     try{
         const {Id} = req.params
@@ -25,7 +25,7 @@ const categoriaExisId = async (req) =>{
     }
 }
 
-//Validar Categoria por nombre
+//Validar si existe una Categoria por nombre
 const categoriaExistName = async (req) => {
     try{
         const {Id} = req.params
@@ -40,14 +40,14 @@ const categoriaExistName = async (req) => {
         )
         const categoria = exist[0][0]
 
-        if(Id){
-            if(categoria && categoria.idCategoria !== Id) {
+        if(Id){ //Si trae Id es porque se desea modificar una categoria existente
+            if(categoria && categoria.idCategoriaProductos !== Number(Id)) { 
                 //Existe otra categoria con el mismo nombre
                 return true
-            }else{
-                return false
             }
-        }else if(!categoria){
+            return false
+            
+        }else if(!categoria){ //Si no trae Id solo se desea insertar una nueva categoria
             return false
         }
         
@@ -61,6 +61,8 @@ const categoriaExistName = async (req) => {
 }
 
 //Funciones para los endpoints
+
+//Devuelve todas las categorias de productos
 export const getCatProductos = async (req, res) => {
     try{
         const buscarCategorias = await sequelize.query(
@@ -74,9 +76,10 @@ export const getCatProductos = async (req, res) => {
     }
 }
 
+//Devuelve una categoria de producto por su Id
 export const getCatProducto = async (req, res) => {
     try{
-        const categoriaExist = await categoriaExisId(req, res)
+        const categoriaExist = await categoriaExisId(req)
         
         if(!categoriaExist) return res.status(404).json({error: 'La categoria no existe'})
 
@@ -87,6 +90,7 @@ export const getCatProducto = async (req, res) => {
     }
 }
 
+//Crea una nueva categoria verificando si el nombre de la categoria no existe aun (solo operadores)
 export const insertarCategoria = async(req, res) =>{
     try{
         const {idUsuario} = req.user
@@ -106,19 +110,19 @@ export const insertarCategoria = async(req, res) =>{
             }
         )
 
-        res.status(201).send('Categoria creada')
+        res.status(201).json({message:'Categoria creada'})
         
     }catch(error){
         return res.status(500).json({message: error.message})
     }
 }
 
+//Actualiza el nombre de la categoria verificando que no colapse con otra existente con el mismo nombre (solo operadores)
 export const actualizarCategoria = async (req, res)=>{
     try{
         const {Id} = req.params
-        const {idUsuario} = req.user
         const {nombre} = req.body
-        if(!idUsuario || !nombre) return res.status(400).json({error: 'Faltan parametros'})
+        if(!nombre) return res.status(400).json({error: 'Faltan parametros'})
 
         const categoria = await categoriaExisId(req, res)
         if(!categoria) return res.status(404).json({error: 'La categoria no existe'})
@@ -136,20 +140,20 @@ export const actualizarCategoria = async (req, res)=>{
             }
         )
 
-        res.status(200).send('Categoria actualizada')
+        res.status(200).json({message:'Categoria actualizada'})
 
     }catch(error){
         return res.status(500).json({message: error.message})
     }
 }
 
+//Actualiza el estado a actio o inactivo de una categoria (solo operadores)
 export const actualizarEstadoCat = async (req, res) =>{
     try{
         const {Id} = req.params
-        const {idUsuario} = req.user
         const {idEstados} = req.body
 
-        if(!idUsuario || !idEstados) return res.status(400).json({message:'Faltan parametros'})
+        if(!idEstados) return res.status(400).json({message:'Faltan parametros'})
         
         if(idEstados !== "1" && idEstados !== "2") return res.status(400).json({message: 'Estado invalido'})
 
@@ -168,10 +172,9 @@ export const actualizarEstadoCat = async (req, res) =>{
         let estado = ''
         if(idEstados === "1"? estado='activo' : estado='inactivo')
 
-        res.status(200).send(`La categoria ahora esta ${estado}`)
+        res.status(200).json({message:`La categoria ahora esta ${estado}`})
     }catch(error){
         return res.status(500).json({message: error.message})
     }
 }
 
-//Endpoints de categoriaProductos terminados

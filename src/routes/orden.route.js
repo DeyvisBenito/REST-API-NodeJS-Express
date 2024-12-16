@@ -11,13 +11,13 @@ const autenticarToken = (req, res, next) => {
     const token = autHeader && autHeader.split(' ')[1]
 
     if(!token){
-        return res.status(401).json({error: 'No autorizado'})
+        return res.status(401).json({error: 'No autorizado, no se ha recibido Token'})
     }
 
     jwt.verify(token, process.env.JWT_SECRET, (err, decode)=> {
         if(err){
             
-            return res.status(403).json({error: 'Sin permisos para obtener estos recursos'})
+            return res.status(403).json({error: 'Sin permisos para obtener estos recursos, Token invalido'})
         }
         req.user = decode;
         next()

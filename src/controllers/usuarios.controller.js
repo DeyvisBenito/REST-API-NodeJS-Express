@@ -19,16 +19,20 @@ const correoExist = async (req, idUsuarioClie) => {
         )
         const userExist = exist[0][0]
 
+        //La funcion de si trae unicamente Id es utilizada cuando se desea actualizar un Usuario ya existente (Operador)
         if(Id && !idUsuarioClie){
             if(userExist && userExist.idUsuarios !== Number(Id)) return true
-        }else if(idUsuarioClie){
-            //Existe otro usuario con ese correo
+            
+         //Validacion si trae idUsuarioClie es utilizada cuando se quere actualizar el usuario (cliente)
+        }else if(idUsuarioClie){ //el idUsuarioClie hace referencia al id de Usuarios que le pertenece al cliente
+            //Si Existe otro usuario con ese correo
             if(userExist && userExist.idUsuarios !== Number(idUsuarioClie)) return true
-        }else if (userExist) {
+        }else if (userExist) {  //Funcionalidad para crear usuario
             //El correo existe
             return true
         }
         
+        return false
     } catch (error) {
         throw new Error(error.message);
     }
@@ -128,8 +132,11 @@ const usuarioExist = async (req) =>{
     }
 }
  
+
 //Endpoints
 
+
+//Obtiene unicamente los clientes
 export const getClientes = async (req, res) =>{
     try{
         const buscar = await sequelize.query(
@@ -144,6 +151,7 @@ export const getClientes = async (req, res) =>{
     }
 }
 
+//Obtiene el cliente por medio del Id del cliente, no del usuario
 export const getCliente = async (req, res) =>{
     try{
         const {Id} = req.params
@@ -157,6 +165,7 @@ export const getCliente = async (req, res) =>{
     }
 }
 
+//Obtiene unicamente los operadores con idRol 2
 export const getOperadores = async (req, res) =>{
     try{
         const buscar = await sequelize.query(
@@ -171,6 +180,7 @@ export const getOperadores = async (req, res) =>{
     }
 }
 
+//Obtiene el operador en este caso por medio del Id del usuario (en comparacion al cliente que es por el Id del cliente)
 export const getOperador = async (req, res) =>{
     try{
         const {Id} = req.params
@@ -183,12 +193,13 @@ export const getOperador = async (req, res) =>{
     }
 }
 
+//Registra un cliente, lo cual ingresa el registro en las tablas Usuarios y Clientes
 export const registrarUsuarioCliente = async (req, res) => {
     try {
         const { razonSocial, nombreComercial, direccionEntrega, correoElectronico, nombreCompleto, password, telefono, fechaNac } = req.body;
 
         if (!razonSocial || !nombreComercial || !direccionEntrega || !correoElectronico || !nombreCompleto || !password || !telefono || !fechaNac) {
-            return res.status(400).send('Faltan parametros')
+            return res.status(400).json({message:'Faltan parametros'})
         }
 
         const passwordEncrypted = await encryptar(password)
@@ -227,30 +238,31 @@ export const registrarUsuarioCliente = async (req, res) => {
     }
 }
 
+//Registra un Operador, directamente a la tabla Usuarios
 export const registrarUsuarioOperador= async (req, res) =>{
     try{
 
-        const {correoElectronico, nombre_completo, password, telefono, fecha_nacimiento} = req.body
+        const {correoElectronico, nombreCompleto, password, telefono, fechaNac} = req.body
 
-        if(!correoElectronico || !nombre_completo || !password || !telefono || !fecha_nacimiento) 
-            return res.status(400).send('Faltan parametros')
+        if(!correoElectronico || !nombreCompleto || !password || !telefono || !fechaNac) 
+            return res.status(400).json({message:'Faltan parametros'})
 
 
         const exist = await correoExist(req, undefined)
-        if(exist) return res.status(406).send('El correo electronico ya existe')
+        if(exist) return res.status(406).json({message:'El correo electronico ya existe'})
     
         const passwordEncrypted = await encryptar(password)
 
         const response = await sequelize.query(
-            `EXEC SP_INSERTAR_USUARIO_OPERADOR @correoElectronico=:correoElectronico, @nombre_completo=:nombre_completo, 
-             @contraseña=:passwordEncrypted, @telefono=:telefono, @fecha_nacimiento=:fecha_nacimiento`,
+            `EXEC SP_INSERTAR_USUARIO_OPERADOR @correoElectronico=:correoElectronico, @nombre_completo=:nombreCompleto, 
+             @contraseña=:passwordEncrypted, @telefono=:telefono, @fecha_nacimiento=:fechaNac`,
              {
                 replacements:{
                     correoElectronico,
-                    nombre_completo,
+                    nombreCompleto,
                     passwordEncrypted,
                     telefono,
-                    fecha_nacimiento
+                    fechaNac
                 }
              }
         )
@@ -268,7 +280,8 @@ export const registrarUsuarioOperador= async (req, res) =>{
     }
 }
 
-
+//Actualiza un cliente tanto del registro en Usuarios y en Clientes
+//Actualizacion por medio del Id cliente, no Id Usuarios
 export const actualizarCliente = async (req, res) => {
     try{
         const {Id} = req.params
@@ -279,8 +292,8 @@ export const actualizarCliente = async (req, res) => {
 
         const clienteExiste = await clienteExist(req)
         if(!clienteExiste) return res.status(404).json({message: 'El cliente a editar no existe'})
-
-        const idUsuarioClie = clienteExiste.idCliente
+        
+        const idUsuarioClie = clienteExiste.idUsuarios
 
         const usuarioExiste = await usuarioClieExist(req, idUsuarioClie)
         if(!usuarioExiste) return res.status(400).json({message: 'El usuario Cliente no existe'})
@@ -307,18 +320,19 @@ export const actualizarCliente = async (req, res) => {
             }
         )
 
-        res.status(200).send('Usuario Cliente actualizado')
+        res.status(200).json({message:'Usuario Cliente actualizado'})
     }catch(error){
         return res.status(500).json({message: error.message})
     }
 }
 
+//Actualiza el operador por medio del Id Usuario, unicamente operadores
 export const actualizarOperador = async (req, res) => {
     try{
         const {Id} = req.params
         const {idUsuario} = req.user
-        const {correoElectronico, nombre_completo, telefono, fechaNac} = req.body
-        if(!correoElectronico || !nombre_completo || !telefono || !fechaNac) return res.status(400).json({message:'Faltan parametros'})
+        const {correoElectronico, nombreCompleto, telefono, fechaNac} = req.body
+        if(!correoElectronico || !nombreCompleto || !telefono || !fechaNac) return res.status(400).json({message:'Faltan parametros'})
         
         const exist = await operadorExist(req)
         if(!exist) return res.status(400).json({message: 'El operador no existe'})
@@ -328,24 +342,25 @@ export const actualizarOperador = async (req, res) => {
 
         const resp = await sequelize.query(
             `EXEC SP_EDITAR_USUARIO_OPERADOR @idUsuario=:Id, @correo_electronico=:correoElectronico,
-            @nombre_completo=:nombre_completo,@telefono=:telefono, @fecha_nacimiento=:fechaNac`,{
+            @nombre_completo=:nombreCompleto,@telefono=:telefono, @fecha_nacimiento=:fechaNac`,{
                 replacements:{
                     Id,
                     correoElectronico,
-                    nombre_completo,
+                    nombreCompleto,
                     telefono,
                     fechaNac
                 }
             }
         )
 
-        res.status(200).send('Usuario Operador actualizado')
+        res.status(200).json({message:'Usuario Operador actualizado'})
 
     }catch(error){
         return res.status(500).json({message: error.message})
     }
 }
 
+//Actualiza estados activo o inactivo a cualquier usuario
 export const actualizarEstadoUsuario= async (req, res) =>{
     try{
         const {Id} = req.params
@@ -367,19 +382,19 @@ export const actualizarEstadoUsuario= async (req, res) =>{
         )
         let estado = ''
         if(idEstado==='1' ? estado='activo' : estado='inactivo')
-        res.status(200).send(`El usuario ahora esta ${estado}`)
+        res.status(200).json({message:`El usuario ahora esta ${estado}`})
     }catch(error){
         return res.status(500).json({message: error.message})
     }
 }
 
-
+//Inicia sesion y se crea un JWT para ir validando su inicio de sesion
 export const login = async (req, res)=>{
     try{
         const {correoElectronico, password} = req.body
 
         if(!correoElectronico || !password){
-            return res.status(400).send('Faltan parametros')
+            return res.status(400).json({message:'Faltan parametros'})
         }
 
         const resp = await sequelize.query(
@@ -407,4 +422,4 @@ export const login = async (req, res)=>{
     }
 }
 
-//Completado
+
