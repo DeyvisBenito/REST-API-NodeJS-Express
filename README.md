@@ -1,5 +1,4 @@
-# Segundo entregable "API-REST en NodeJS".
-# Participante GDA00499-OT Deyvis Benito
+# "API-REST en NodeJS".
 
 ## Colocar sus propias variables de entorno
 
